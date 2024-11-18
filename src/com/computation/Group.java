@@ -4,6 +4,8 @@ import com.computation.ComputationComponent;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 public class Group {
     private String name;
     private final ConcurrentHashMap<String, ComputationComponent> components = new ConcurrentHashMap<>();
@@ -22,12 +24,19 @@ public class Group {
             component.cancelComputation();
         }
     }
+
     public void cancelGroup() {
         components.forEach((name, component) -> component.cancelComputation());
         System.out.println("All components in group " + name + " have been cancelled.");
     }
+
     public void printSummary() {
         System.out.println("Summary for " + name + ":");
         components.forEach((name, component) -> component.printStatus());
+    }
+
+    // Get a specific component by its name
+    public ComputationComponent getComponent(String componentName) {
+        return components.get(componentName);
     }
 }

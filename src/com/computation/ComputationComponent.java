@@ -12,20 +12,25 @@ public class ComputationComponent {
     private final PipedInputStream inputStream = new PipedInputStream();
     private final PipedOutputStream outputStream = new PipedOutputStream();
 
-    public ComputationComponent(String name, int idx) {
-        this.name = name;
-        this.idx = idx;
-        try {
-            inputStream.connect(outputStream); // Connect the pipe
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public boolean isFinished() {
+        return isFinished;
     }
 
     public String getName() {
         return name;
     }
 
+    public ComputationComponent(String name, int idx) {
+        this.name = name;
+        this.idx = idx;
+        try {
+            inputStream.connect(outputStream); /
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // run the computation asynchronously in a new thread
     public void runComputation() {
         new Thread(() -> {
             try {
@@ -35,12 +40,29 @@ public class ComputationComponent {
                 Thread.sleep(2000);
                 if (isCancelled) return;
 
+                // write a simple byte (1) to the output stream to simulate a result
                 outputStream.write(1);
                 outputStream.flush();
                 System.out.println("Computation finished for " + name);
 
-                isFinished = true;
+                // start reading the result from the pipe
+                readFromPipe();
+
+                isFinished = true; // Mark computation as finished
             } catch (InterruptedException | IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    // read the result from the pipe in a separate thread
+    public void readFromPipe() {
+        new Thread(() -> {
+            try {
+                // read data from the pipe
+                int data = inputStream.read();
+                System.out.println("Received data: " + data);
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }).start();
@@ -51,6 +73,7 @@ public class ComputationComponent {
         System.out.println("Computation cancelled for " + name);
     }
 
+    // print the status of the computation
     public void printStatus() {
         if (isCancelled) {
             System.out.println(name + " was cancelled.");
