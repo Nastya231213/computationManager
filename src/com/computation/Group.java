@@ -22,7 +22,10 @@ public class Group {
             component.cancelComputation();
         }
     }
-
+    public void cancelGroup() {
+        components.forEach((name, component) -> component.cancelComputation());
+        System.out.println("All components in group " + name + " have been cancelled.");
+    }
     public void printSummary() {
         System.out.println("Summary for " + name + ":");
         components.forEach((name, component) -> component.printStatus());
