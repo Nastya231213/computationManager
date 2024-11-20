@@ -1,5 +1,7 @@
 package com.computation;
 
+import com.utils.MathUtils;
+
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -8,21 +10,27 @@ import java.util.concurrent.CompletableFuture;
 public class ComputationComponent {
     private String name;
     private int idx;
+    private final String functionType;
     private boolean isCancelled = false;
     private boolean isFinished = false;
     private final PipedInputStream inputStream = new PipedInputStream();
     private final PipedOutputStream outputStream = new PipedOutputStream();
-
-    public ComputationComponent(String name, int idx) {
+    private double result;
+    private double argument;
+    public ComputationComponent(String name, int idx, String functionType) {
         this.name = name;
         this.idx = idx;
+        this.functionType = functionType;
+
         try {
             inputStream.connect(outputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
+    public void setArgument(double argument) {
+        this.argument = argument;
+    }
     public String getName() {
         return name;
     }
@@ -38,19 +46,19 @@ public class ComputationComponent {
                 if (isCancelled) return;
 
                 System.out.println("Running computation for component " + name);
-                Thread.sleep(2000); // симуляція роботи
+                Thread.sleep(2000);
                 if (isCancelled) return;
 
-                // Записати результат у потік
-                outputStream.write(1);
-                outputStream.flush();
-                System.out.println("Computation finished for " + name);
-
-                // Читання результату
+                switch (functionType) {
+                    case "factorial" -> result = MathUtils.factorial((int) argument);
+                    case "sqrt" -> result = MathUtils.squareRoot(argument);
+                    case "power" -> result = MathUtils.power(argument, 2); //
+                    default -> throw new IllegalArgumentException("Unsupported function type: " + functionType);
+                }
                 readFromPipe();
 
                 isFinished = true;
-            } catch (InterruptedException | IOException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         });

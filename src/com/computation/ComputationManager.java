@@ -11,11 +11,10 @@ public class ComputationManager {
         groups.put(groupName, group);
         return group;
     }
-
-    public static ComputationComponent addComponentToGroup(String groupName, String componentName, int idx) {
+    public static ComputationComponent addComponentToGroup(String groupName, String componentName, int idx, String functionType) {
         Group group = groups.get(groupName);
         if (group != null) {
-            ComputationComponent component = new ComputationComponent(componentName, idx);
+            ComputationComponent component = new ComputationComponent(componentName, idx, functionType);
             group.addComponent(component);
             return component;
         }
@@ -37,6 +36,14 @@ public class ComputationManager {
         CompletableFuture.runAsync(component::runComputation);
     }
 //cancel a group
+public static void runGroup(String groupName) {
+    Group group = groups.get(groupName);
+    if (group != null) {
+        group.getComponents().forEach((name, component) ->
+                CompletableFuture.runAsync(component::runComputation)
+        );
+    }
+}
 
     public static void cancelAllComputationsInGroup(String groupName) {
         Group group = groups.get(groupName);
@@ -55,12 +62,15 @@ public class ComputationManager {
 
     public static void main(String[] args) {
         Group group1 = ComputationManager.newGroup("Group1");
-        ComputationComponent comp1 = ComputationManager.addComponentToGroup("Group1", "ComponentA", 1);
-        ComputationComponent comp2 = ComputationManager.addComponentToGroup("Group1", "ComponentB", 2);
-
-        runComputationAsync(comp1);
-        runComputationAsync(comp2);
-
+        ComputationComponent comp1 = ComputationManager.addComponentToGroup("Group1", "ComponentA", 1, "factorial");
+        ComputationComponent comp2 = ComputationManager.addComponentToGroup("Group1", "ComponentB", 2, "sqrt");
+        group1.setSharedArgument(5);
+        Group group2 = ComputationManager.newGroup("Group2");
+        ComputationComponent comp3 = ComputationManager.addComponentToGroup("Group2", "ComponentC", 1, "power");
+        ComputationComponent comp4 = ComputationManager.addComponentToGroup("Group2", "ComponentD", 2, "factorial");
+        group1.setSharedArgument(5);
+        runGroup("Group1");
+        runGroup("Group2");
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {

@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Group {
     private String name;
+    private double sharedArgument;
     private final ConcurrentHashMap<String, ComputationComponent> components = new ConcurrentHashMap<>();
 
     public Group(String name) {
@@ -15,6 +16,7 @@ public class Group {
     }
 
     public void addComponent(ComputationComponent component) {
+
         components.put(component.getName(), component);
     }
 
@@ -34,7 +36,13 @@ public class Group {
         System.out.println("Summary for " + name + ":");
         components.forEach((name, component) -> component.printStatus());
     }
-
+    public void setSharedArgument(double argument) {
+        this.sharedArgument = argument;
+        components.forEach((name, component) -> component.setArgument(sharedArgument));
+    }
+    public ConcurrentHashMap<String, ComputationComponent> getComponents() {
+        return components;
+    }
     // Get a specific component by its name
     public ComputationComponent getComponent(String componentName) {
         return components.get(componentName);
