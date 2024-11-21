@@ -76,9 +76,11 @@ public static void runGroup(String groupName) {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         // cancel one computation
         cancelComputation("Group1", "ComponentA");
-
+        comp3.readFromPipe();
+        comp2.readFromPipe();
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {

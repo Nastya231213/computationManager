@@ -17,20 +17,23 @@ public class ComputationComponent {
     private final PipedOutputStream outputStream = new PipedOutputStream();
     private double result;
     private double argument;
+
     public ComputationComponent(String name, int idx, String functionType) {
         this.name = name;
         this.idx = idx;
         this.functionType = functionType;
-
         try {
+            // Connect the input and output streams to establish communication via pipe
             inputStream.connect(outputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     public void setArgument(double argument) {
         this.argument = argument;
     }
+
     public String getName() {
         return name;
     }
@@ -38,8 +41,8 @@ public class ComputationComponent {
     public boolean isFinished() {
         return isFinished;
     }
-    // run the computation asynchronously in a new thread
 
+    // Run the computation asynchronously in a new thread
     public void runComputation() {
         CompletableFuture.runAsync(() -> {
             try {
@@ -47,29 +50,65 @@ public class ComputationComponent {
 
                 System.out.println("Running computation for component " + name);
                 Thread.sleep(2000);
+
                 if (isCancelled) return;
 
                 switch (functionType) {
-                    case "factorial" -> result = MathUtils.factorial((int) argument);
-                    case "sqrt" -> result = MathUtils.squareRoot(argument);
-                    case "power" -> result = MathUtils.power(argument, 2); //
-                    default -> throw new IllegalArgumentException("Unsupported function type: " + functionType);
+                    case "factorial":
+                        result = MathUtils.factorial((int) argument);
+                        break;
+                    case "sqrt":
+                        result = MathUtils.squareRoot(argument);
+                        break;
+                    case "power":
+                        result = MathUtils.power(argument, 2);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported function type: " + functionType);
                 }
-                readFromPipe();
+
+                // Send the result through the pipe to another component or thread
+                sendResultThroughPipe();
 
                 isFinished = true;
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            } finally {
+                closePipe();
             }
         });
     }
-    // read the result from the pipe in a separate thread
+    private void closePipe() {
+        try {
+            inputStream.close();
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-    private void readFromPipe() {
+    private void sendResultThroughPipe() {
+        try {
+            // Send the result as a string through the output stream
+            String resultString = String.valueOf(result);
+            outputStream.write(resultString.getBytes());
+            outputStream.flush();
+            System.out.println("Sent result through pipe: " + result);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Read from the pipe in a separate thread
+    public void readFromPipe() {
         CompletableFuture.runAsync(() -> {
             try {
-                int data = inputStream.read();
-                System.out.println("Received data: " + data);
+                byte[] buffer = new byte[1024];
+                int bytesRead = inputStream.read(buffer);
+                if (bytesRead != -1) {
+                    String resultString = new String(buffer, 0, bytesRead);
+                    System.out.println("Received data from pipe: " + resultString);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -80,7 +119,7 @@ public class ComputationComponent {
         isCancelled = true;
         System.out.println("Computation cancelled for " + name);
     }
-    // print the status of the computation
+
     public void printStatus() {
         if (isCancelled) {
             System.out.println(name + " was cancelled.");
@@ -91,3 +130,4 @@ public class ComputationComponent {
         }
     }
 }
+
